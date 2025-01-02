@@ -4,11 +4,15 @@ import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
+    getPaginationRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 
+import { clsx } from "clsx";
+
 import { ArrowUpDown } from "lucide-react";
 
+import { formatDate } from "../../utils/date";
 import mockdata from "../../data/data.json";
 
 type ProductType = {
@@ -42,11 +46,11 @@ const columns = [
         header: "Subcategory",
     }),
     columnHelper.accessor("createdAt", {
-        cell: (info) => info.getValue(),
+        cell: (info) => formatDate(info.getValue()),
         header: "Created At",
     }),
     columnHelper.accessor("updatedAt", {
-        cell: (info) => info.getValue(),
+        cell: (info) => formatDate(info.getValue()),
         header: "Updated At",
     }),
     columnHelper.accessor("price", {
@@ -65,7 +69,15 @@ export default function ProductsTable() {
     const tableManager = useReactTable({
         data,
         columns,
+
+        initialState: {
+            pagination: {
+                pageSize: 10,
+            },
+        },
+
         getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
     });
 
     return (
@@ -79,7 +91,7 @@ export default function ProductsTable() {
                             {headerGroup.headers.map((header) => (
                                 <th
                                     key={header.id}
-                                    className="py-3 text-sm font-extrabold tracking-wide"
+                                    className="py-3 font-extrabold tracking-wide"
                                 >
                                     <div className="flex items-center justify-center gap-2">
                                         {flexRender(
@@ -96,6 +108,28 @@ export default function ProductsTable() {
                         </tr>
                     ))}
                 </thead>
+
+                <tbody>
+                    {tableManager.getRowModel().rows.map((row) => (
+                        <tr key={row.id}>
+                            {row.getVisibleCells().map((cell) => (
+                                <td
+                                    key={cell.id}
+                                    className={clsx("py-2", {
+                                        "text-center": cell.column.id !== "id",
+                                    })}
+                                >
+                                    {cell.getIsPlaceholder()
+                                        ? null
+                                        : flexRender(
+                                              cell.column.columnDef.cell,
+                                              cell.getContext()
+                                          )}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
             </table>
 
             <div>Pagination</div>
