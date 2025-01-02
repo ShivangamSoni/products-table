@@ -5,8 +5,11 @@ import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
+    getExpandedRowModel,
+    getGroupedRowModel,
     getPaginationRowModel,
     getSortedRowModel,
+    GroupingState,
     useReactTable,
 } from "@tanstack/react-table";
 
@@ -16,6 +19,10 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
+    ChevronDown,
+    ChevronRight,
+    ChevronsRight,
+    ChevronUp,
     Eye,
     Layers,
     ListFilter,
@@ -24,11 +31,12 @@ import {
 import { Pagination } from "../Pagination";
 import SidePanel from "../sidepanel/SidePanel";
 import Sorting from "./SIdePanels/Sorting";
+import Toggle from "./SIdePanels/Toggle";
+import Group from "./SIdePanels/Group";
 
 import { formatDate } from "../../utils/date";
 
 import mockdata from "../../data/data.json";
-import Toggle from "./SIdePanels/Toggle";
 
 export type ProductType = {
     id: number;
@@ -45,57 +53,125 @@ const columnHelper = createColumnHelper<ProductType>();
 
 const columns = [
     columnHelper.accessor("id", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "ID",
     }),
     columnHelper.accessor("name", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Name",
     }),
     columnHelper.accessor("category", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Category",
     }),
     columnHelper.accessor("subcategory", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Subcategory",
     }),
     columnHelper.accessor("createdAt", {
-        cell: (info) => formatDate(info.getValue()),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return formatDate(info.getValue());
+        },
         header: "Created At",
     }),
     columnHelper.accessor("updatedAt", {
-        cell: (info) => formatDate(info.getValue()),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return formatDate(info.getValue());
+        },
         header: "Updated At",
     }),
     columnHelper.accessor("price", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Price",
     }),
     columnHelper.accessor("sale_price", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Sale Price",
     }),
 ];
+
+const expanderColumn = columnHelper.display({
+    id: "expander",
+    header: () => <ChevronsRight size={16} />,
+    cell: ({ row }) => {
+        const canExpand = row.getCanExpand();
+        const isExpanded = row.getIsExpanded();
+        return (
+            <button disabled={!canExpand} onClick={() => row.toggleExpanded()}>
+                {canExpand ? (
+                    isExpanded ? (
+                        <ChevronUp size={16} />
+                    ) : (
+                        <ChevronDown size={16} />
+                    )
+                ) : (
+                    <ChevronRight className="text-gray-300" size={16} />
+                )}
+            </button>
+        );
+    },
+});
 
 export default function ProductsTable() {
     const [data] = useState<ProductType[]>(() => [...mockdata]);
 
     const [sidePanelStatus, setSidePanelStatus] = useState<
         "close" | "sort" | "toggle" | "group" | "filter"
-    >("toggle");
+    >("group");
 
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
 
     const [columnVisibility, setColumnVisibility] = useState({});
 
+    const [grouping, setGrouping] = useState<GroupingState>([]);
+    const [selectedGroupBy, setSelectedGroupBy] = useState<string[]>([]);
+    const [expanded, setExpanded] = useState({});
+
     const tableManager = useReactTable({
         data,
-        columns,
+        columns: grouping.length == 0 ? columns : [expanderColumn, ...columns],
 
         state: {
             sorting,
             columnVisibility,
+            grouping,
+            expanded,
         },
 
         initialState: {
@@ -118,11 +194,26 @@ export default function ProductsTable() {
 
         // Visibility/Toggle
         onColumnVisibilityChange: setColumnVisibility,
+
+        // Grouping
+        getGroupedRowModel: getGroupedRowModel(),
+        onGroupingChange: setGrouping,
+        getExpandedRowModel: getExpandedRowModel(),
+        onExpandedChange: setExpanded,
     });
 
     function closeSidePanel() {
         setSidePanelStatus("close");
     }
+
+    const handleApplyGroup = () => {
+        setGrouping(selectedGroupBy);
+    };
+
+    const handleClearGroup = () => {
+        setSelectedGroupBy([]);
+        setGrouping([]);
+    };
 
     return (
         <div className="flex flex-col gap-4 min-h-full max-w-screen-xl mx-auto py-16 px-8">
@@ -145,7 +236,10 @@ export default function ProductsTable() {
                     <span className="sr-only">Filter</span>
                     <ListFilter className="text-gray-600" size={24} />
                 </button>
-                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                <button
+                    onClick={() => setSidePanelStatus("group")}
+                    className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
+                >
                     <span className="sr-only">Group Data</span>
                     <Layers className="text-gray-600" size={24} />
                 </button>
@@ -168,21 +262,25 @@ export default function ProductsTable() {
                                                 header.getContext()
                                             )}
 
-                                            {!isSorted ? (
-                                                <ArrowUpDown
-                                                    size={16}
-                                                    className="text-neutral-300"
-                                                />
-                                            ) : isSorted === "asc" ? (
-                                                <ArrowDown
-                                                    size={16}
-                                                    className="text-neutral-300"
-                                                />
-                                            ) : (
-                                                <ArrowUp
-                                                    size={16}
-                                                    className="text-neutral-300"
-                                                />
+                                            {header.id !== "expander" && (
+                                                <>
+                                                    {!isSorted ? (
+                                                        <ArrowUpDown
+                                                            size={16}
+                                                            className="text-neutral-300"
+                                                        />
+                                                    ) : isSorted === "asc" ? (
+                                                        <ArrowDown
+                                                            size={16}
+                                                            className="text-neutral-300"
+                                                        />
+                                                    ) : (
+                                                        <ArrowUp
+                                                            size={16}
+                                                            className="text-neutral-300"
+                                                        />
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </th>
@@ -202,12 +300,27 @@ export default function ProductsTable() {
                                         "text-center": cell.column.id !== "id",
                                     })}
                                 >
-                                    {cell.getIsPlaceholder()
-                                        ? null
-                                        : flexRender(
-                                              cell.column.columnDef.cell,
-                                              cell.getContext()
-                                          )}
+                                    {cell.getIsGrouped() ? (
+                                        <button
+                                            onClick={row.getToggleExpandedHandler()}
+                                        >
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}{" "}
+                                            ({row.subRows.length})
+                                        </button>
+                                    ) : cell.getIsAggregated() ? (
+                                        flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )
+                                    ) : cell.getIsPlaceholder() ? null : (
+                                        flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )
+                                    )}
                                 </td>
                             ))}
                         </tr>
@@ -246,6 +359,21 @@ export default function ProductsTable() {
                     <Toggle
                         tableManager={tableManager}
                         setColumnVisibility={setColumnVisibility}
+                    />
+                </SidePanel>
+            )}
+
+            {sidePanelStatus === "group" && (
+                <SidePanel
+                    title={"Create Groups"}
+                    isOpen
+                    onClose={closeSidePanel}
+                >
+                    <Group
+                        selectedGroupBy={selectedGroupBy}
+                        onChange={setSelectedGroupBy}
+                        onApply={handleApplyGroup}
+                        onClear={handleClearGroup}
                     />
                 </SidePanel>
             )}

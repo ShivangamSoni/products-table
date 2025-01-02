@@ -14,21 +14,23 @@ export default function Sorting({
                 {tableManager.getAllLeafColumns().map((column) => {
                     const isSorted = column.getIsSorted();
                     return (
-                        <li key={column.id}>
-                            <button
-                                className="outline-none w-full flex items-center justify-start gap-3 p-3 border rounded hover:bg-gray-100 focus-visible:bg-gray-100"
-                                onClick={column.getToggleSortingHandler()}
-                            >
-                                {column.id}
-                                {!isSorted ? (
-                                    <ArrowUpDown size={16} />
-                                ) : isSorted === "asc" ? (
-                                    <ArrowDown size={16} />
-                                ) : (
-                                    <ArrowUp size={16} />
-                                )}
-                            </button>
-                        </li>
+                        column.id !== "expander" && (
+                            <li key={column.id}>
+                                <button
+                                    className="outline-none w-full flex items-center justify-start gap-3 p-3 border rounded hover:bg-gray-100 focus-visible:bg-gray-100"
+                                    onClick={column.getToggleSortingHandler()}
+                                >
+                                    {column.id}
+                                    {!isSorted ? (
+                                        <ArrowUpDown size={16} />
+                                    ) : isSorted === "asc" ? (
+                                        <ArrowDown size={16} />
+                                    ) : (
+                                        <ArrowUp size={16} />
+                                    )}
+                                </button>
+                            </li>
+                        )
                     );
                 })}
             </ul>
