@@ -1,3 +1,5 @@
+import { MultiSelect } from "../../MultiSelect";
+
 export default function Group({
     selectedGroupBy,
     onChange,
@@ -9,27 +11,26 @@ export default function Group({
     onApply: () => void;
     onClear: () => void;
 }) {
-    const handleSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const options = Array.from(e.target.selectedOptions).map(
-            (opt) => opt.value
-        );
-        onChange(options);
-    };
-
     return (
         <div>
-            <label htmlFor="grouping">Group By:</label>
-            <select
-                id="grouping"
-                multiple
-                value={selectedGroupBy}
-                onChange={handleSelectionChange}
+            <MultiSelect
+                options={["category", "subcategory"]}
+                selectedOptions={selectedGroupBy}
+                onChange={onChange}
+            />
+
+            <button
+                className="mb-3 mt-6 outline-none w-full text-center p-3 border-2 border-blue-300 rounded hover:bg-gray-100 focus-visible:bg-gray-100"
+                onClick={onClear}
             >
-                <option value="category">Category</option>
-                <option value="subcategory">Subcategory</option>
-            </select>
-            <button onClick={onApply}>Apply Group</button>
-            <button onClick={onClear}>Clear Group</button>
+                Clear Group
+            </button>
+            <button
+                className="outline-none w-full text-center p-3 border-2 border-blue-300 rounded hover:bg-gray-100 focus-visible:bg-gray-100"
+                onClick={onApply}
+            >
+                Apply Group
+            </button>
         </div>
     );
 }
