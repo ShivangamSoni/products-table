@@ -109,6 +109,8 @@ export default function ProductsTable() {
         // Sorting
         getSortedRowModel: getSortedRowModel(),
         onSortingChange: setSorting,
+        enableMultiSort: true,
+        isMultiSortEvent: () => true,
     });
 
     return (
