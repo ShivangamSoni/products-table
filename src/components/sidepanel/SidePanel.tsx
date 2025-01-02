@@ -42,7 +42,7 @@ export default function SidePanel({
                         <h2 className="text-xl font-semibold">{title}</h2>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-full"
+                            className="p-2 outline-none hover:bg-gray-100 focus-visible:bg-gray-100 rounded-full"
                         >
                             <X className="h-5 w-5" />
                         </button>
