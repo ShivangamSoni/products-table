@@ -5,8 +5,11 @@ import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
+    getExpandedRowModel,
+    getGroupedRowModel,
     getPaginationRowModel,
     getSortedRowModel,
+    GroupingState,
     useReactTable,
 } from "@tanstack/react-table";
 
@@ -24,11 +27,12 @@ import {
 import { Pagination } from "../Pagination";
 import SidePanel from "../sidepanel/SidePanel";
 import Sorting from "./SIdePanels/Sorting";
+import Toggle from "./SIdePanels/Toggle";
+import Group from "./SIdePanels/Group";
 
 import { formatDate } from "../../utils/date";
 
 import mockdata from "../../data/data.json";
-import Toggle from "./SIdePanels/Toggle";
 
 export type ProductType = {
     id: number;
@@ -83,11 +87,15 @@ export default function ProductsTable() {
 
     const [sidePanelStatus, setSidePanelStatus] = useState<
         "close" | "sort" | "toggle" | "group" | "filter"
-    >("toggle");
+    >("group");
 
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
 
     const [columnVisibility, setColumnVisibility] = useState({});
+
+    const [grouping, setGrouping] = useState<GroupingState>([]);
+    const [selectedGroupBy, setSelectedGroupBy] = useState<string[]>([]);
+    const [expanded, setExpanded] = useState({});
 
     const tableManager = useReactTable({
         data,
@@ -96,6 +104,8 @@ export default function ProductsTable() {
         state: {
             sorting,
             columnVisibility,
+            grouping,
+            expanded,
         },
 
         initialState: {
@@ -118,11 +128,26 @@ export default function ProductsTable() {
 
         // Visibility/Toggle
         onColumnVisibilityChange: setColumnVisibility,
+
+        // Grouping
+        getGroupedRowModel: getGroupedRowModel(),
+        onGroupingChange: setGrouping,
+        getExpandedRowModel: getExpandedRowModel(),
+        onExpandedChange: setExpanded,
     });
 
     function closeSidePanel() {
         setSidePanelStatus("close");
     }
+
+    const handleApplyGroup = () => {
+        setGrouping(selectedGroupBy);
+    };
+
+    const handleClearGroup = () => {
+        setSelectedGroupBy([]);
+        setGrouping([]);
+    };
 
     return (
         <div className="flex flex-col gap-4 min-h-full max-w-screen-xl mx-auto py-16 px-8">
@@ -145,7 +170,10 @@ export default function ProductsTable() {
                     <span className="sr-only">Filter</span>
                     <ListFilter className="text-gray-600" size={24} />
                 </button>
-                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                <button
+                    onClick={() => setSidePanelStatus("group")}
+                    className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
+                >
                     <span className="sr-only">Group Data</span>
                     <Layers className="text-gray-600" size={24} />
                 </button>
@@ -202,12 +230,22 @@ export default function ProductsTable() {
                                         "text-center": cell.column.id !== "id",
                                     })}
                                 >
-                                    {cell.getIsPlaceholder()
-                                        ? null
-                                        : flexRender(
-                                              cell.column.columnDef.cell,
-                                              cell.getContext()
-                                          )}
+                                    {cell.getIsGrouped() ? (
+                                        <button
+                                            onClick={row.getToggleExpandedHandler()}
+                                        >
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}{" "}
+                                            ({row.subRows.length})
+                                        </button>
+                                    ) : cell.getIsAggregated() ? null : cell.getIsPlaceholder() ? null : (
+                                        flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )
+                                    )}
                                 </td>
                             ))}
                         </tr>
@@ -246,6 +284,21 @@ export default function ProductsTable() {
                     <Toggle
                         tableManager={tableManager}
                         setColumnVisibility={setColumnVisibility}
+                    />
+                </SidePanel>
+            )}
+
+            {sidePanelStatus === "group" && (
+                <SidePanel
+                    title={"Create Groups"}
+                    isOpen
+                    onClose={closeSidePanel}
+                >
+                    <Group
+                        selectedGroupBy={selectedGroupBy}
+                        onChange={setSelectedGroupBy}
+                        onApply={handleApplyGroup}
+                        onClear={handleClearGroup}
                     />
                 </SidePanel>
             )}
