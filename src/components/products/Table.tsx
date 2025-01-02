@@ -1,24 +1,35 @@
 import { useState } from "react";
 
 import {
+    ColumnSort,
     createColumnHelper,
     flexRender,
     getCoreRowModel,
     getPaginationRowModel,
+    getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 
 import { clsx } from "clsx";
 
-import { ArrowUpDown, Eye, Layers, ListFilter } from "lucide-react";
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Eye,
+    Layers,
+    ListFilter,
+} from "lucide-react";
 
 import { Pagination } from "../Pagination";
+import SidePanel from "../sidepanel/SidePanel";
+import Sorting from "./SIdePanels/Sorting";
 
 import { formatDate } from "../../utils/date";
 
 import mockdata from "../../data/data.json";
 
-type ProductType = {
+export type ProductType = {
     id: number;
     name: string;
     category: string;
@@ -69,9 +80,19 @@ const columns = [
 export default function ProductsTable() {
     const [data] = useState<ProductType[]>(() => [...mockdata]);
 
+    const [sidePanelStatus, setSidePanelStatus] = useState<
+        "close" | "sort" | "toggle" | "group" | "filter"
+    >("sort");
+
+    const [sorting, setSorting] = useState<ColumnSort[]>([]);
+
     const tableManager = useReactTable({
         data,
         columns,
+
+        state: {
+            sorting,
+        },
 
         initialState: {
             pagination: {
@@ -79,8 +100,17 @@ export default function ProductsTable() {
             },
         },
 
+        // Required for everything
         getCoreRowModel: getCoreRowModel(),
+
+        // Pagination
         getPaginationRowModel: getPaginationRowModel(),
+
+        // Sorting
+        getSortedRowModel: getSortedRowModel(),
+        onSortingChange: setSorting,
+        enableMultiSort: true,
+        isMultiSortEvent: () => true,
     });
 
     return (
@@ -90,7 +120,10 @@ export default function ProductsTable() {
                     <span className="sr-only">Toggle Columns</span>
                     <Eye className="text-gray-600" size={24} />
                 </button>
-                <button className="outline-none p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                <button
+                    onClick={() => setSidePanelStatus("sort")}
+                    className="outline-none p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
+                >
                     <span className="sr-only">Sort Data</span>
                     <ArrowUpDown className="text-gray-600" size={24} />
                 </button>
@@ -108,23 +141,39 @@ export default function ProductsTable() {
                 <thead>
                     {tableManager.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id} className="border-y">
-                            {headerGroup.headers.map((header) => (
-                                <th
-                                    key={header.id}
-                                    className="py-3 font-extrabold tracking-wide"
-                                >
-                                    <div className="flex items-center justify-center gap-2">
-                                        {flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
-                                        <ArrowUpDown
-                                            className="text-neutral-300"
-                                            size={20}
-                                        />
-                                    </div>
-                                </th>
-                            ))}
+                            {headerGroup.headers.map((header) => {
+                                const isSorted = header.column.getIsSorted();
+                                return (
+                                    <th
+                                        key={header.id}
+                                        className="py-3 font-extrabold tracking-wide"
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            {flexRender(
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
+
+                                            {!isSorted ? (
+                                                <ArrowUpDown
+                                                    size={16}
+                                                    className="text-neutral-300"
+                                                />
+                                            ) : isSorted === "asc" ? (
+                                                <ArrowDown
+                                                    size={16}
+                                                    className="text-neutral-300"
+                                                />
+                                            ) : (
+                                                <ArrowUp
+                                                    size={16}
+                                                    className="text-neutral-300"
+                                                />
+                                            )}
+                                        </div>
+                                    </th>
+                                );
+                            })}
                         </tr>
                     ))}
                 </thead>
@@ -163,6 +212,16 @@ export default function ProductsTable() {
                     onNext={tableManager.nextPage}
                 />
             </div>
+
+            {sidePanelStatus === "sort" && (
+                <SidePanel
+                    title={"Sorting Options"}
+                    isOpen
+                    onClose={() => setSidePanelStatus("close")}
+                >
+                    <Sorting tableManager={tableManager} />
+                </SidePanel>
+            )}
         </div>
     );
 }
