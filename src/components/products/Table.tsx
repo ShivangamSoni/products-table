@@ -19,6 +19,10 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
+    ChevronDown,
+    ChevronRight,
+    ChevronsRight,
+    ChevronUp,
     Eye,
     Layers,
     ListFilter,
@@ -49,38 +53,100 @@ const columnHelper = createColumnHelper<ProductType>();
 
 const columns = [
     columnHelper.accessor("id", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "ID",
     }),
     columnHelper.accessor("name", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Name",
     }),
     columnHelper.accessor("category", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Category",
     }),
     columnHelper.accessor("subcategory", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Subcategory",
     }),
     columnHelper.accessor("createdAt", {
-        cell: (info) => formatDate(info.getValue()),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return formatDate(info.getValue());
+        },
         header: "Created At",
     }),
     columnHelper.accessor("updatedAt", {
-        cell: (info) => formatDate(info.getValue()),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return formatDate(info.getValue());
+        },
         header: "Updated At",
     }),
     columnHelper.accessor("price", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Price",
     }),
     columnHelper.accessor("sale_price", {
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+            if (info.cell.getIsAggregated()) {
+                return null;
+            }
+            return info.getValue();
+        },
         header: "Sale Price",
     }),
 ];
+
+const expanderColumn = columnHelper.display({
+    id: "expander",
+    header: () => <ChevronsRight size={16} />,
+    cell: ({ row }) => {
+        const canExpand = row.getCanExpand();
+        const isExpanded = row.getIsExpanded();
+        return (
+            <button disabled={!canExpand} onClick={() => row.toggleExpanded()}>
+                {canExpand ? (
+                    isExpanded ? (
+                        <ChevronUp size={16} />
+                    ) : (
+                        <ChevronDown size={16} />
+                    )
+                ) : (
+                    <ChevronRight className="text-gray-300" size={16} />
+                )}
+            </button>
+        );
+    },
+});
 
 export default function ProductsTable() {
     const [data] = useState<ProductType[]>(() => [...mockdata]);
@@ -99,7 +165,7 @@ export default function ProductsTable() {
 
     const tableManager = useReactTable({
         data,
-        columns,
+        columns: grouping.length == 0 ? columns : [expanderColumn, ...columns],
 
         state: {
             sorting,
@@ -196,21 +262,25 @@ export default function ProductsTable() {
                                                 header.getContext()
                                             )}
 
-                                            {!isSorted ? (
-                                                <ArrowUpDown
-                                                    size={16}
-                                                    className="text-neutral-300"
-                                                />
-                                            ) : isSorted === "asc" ? (
-                                                <ArrowDown
-                                                    size={16}
-                                                    className="text-neutral-300"
-                                                />
-                                            ) : (
-                                                <ArrowUp
-                                                    size={16}
-                                                    className="text-neutral-300"
-                                                />
+                                            {header.id !== "expander" && (
+                                                <>
+                                                    {!isSorted ? (
+                                                        <ArrowUpDown
+                                                            size={16}
+                                                            className="text-neutral-300"
+                                                        />
+                                                    ) : isSorted === "asc" ? (
+                                                        <ArrowDown
+                                                            size={16}
+                                                            className="text-neutral-300"
+                                                        />
+                                                    ) : (
+                                                        <ArrowUp
+                                                            size={16}
+                                                            className="text-neutral-300"
+                                                        />
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </th>
@@ -240,7 +310,12 @@ export default function ProductsTable() {
                                             )}{" "}
                                             ({row.subRows.length})
                                         </button>
-                                    ) : cell.getIsAggregated() ? null : cell.getIsPlaceholder() ? null : (
+                                    ) : cell.getIsAggregated() ? (
+                                        flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )
+                                    ) : cell.getIsPlaceholder() ? null : (
                                         flexRender(
                                             cell.column.columnDef.cell,
                                             cell.getContext()
