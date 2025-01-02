@@ -12,7 +12,10 @@ import { clsx } from "clsx";
 
 import { ArrowUpDown } from "lucide-react";
 
+import { Pagination } from "../Pagination";
+
 import { formatDate } from "../../utils/date";
+
 import mockdata from "../../data/data.json";
 
 type ProductType = {
@@ -132,7 +135,17 @@ export default function ProductsTable() {
                 </tbody>
             </table>
 
-            <div>Pagination</div>
+            <div className="flex items-center justify-center space-x-2">
+                <Pagination
+                    pageCount={tableManager.getPageCount()}
+                    pageIndex={tableManager.getState().pagination.pageIndex}
+                    canPrevious={tableManager.getCanPreviousPage()}
+                    canNext={tableManager.getCanNextPage()}
+                    onChange={(idx) => tableManager.setPageIndex(idx)}
+                    onPrevious={tableManager.previousPage}
+                    onNext={tableManager.nextPage}
+                />
+            </div>
         </div>
     );
 }
