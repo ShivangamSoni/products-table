@@ -10,7 +10,7 @@ import {
 
 import { clsx } from "clsx";
 
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Eye, Layers, ListFilter } from "lucide-react";
 
 import { Pagination } from "../Pagination";
 
@@ -85,7 +85,24 @@ export default function ProductsTable() {
 
     return (
         <div className="flex flex-col gap-4 min-h-full max-w-screen-xl mx-auto py-16 px-8">
-            <div>Actions</div>
+            <div className="flex items-center justify-end gap-6">
+                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                    <span className="sr-only">Toggle Columns</span>
+                    <Eye className="text-gray-600" size={24} />
+                </button>
+                <button className="outline-none p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                    <span className="sr-only">Sort Data</span>
+                    <ArrowUpDown className="text-gray-600" size={24} />
+                </button>
+                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                    <span className="sr-only">Filter</span>
+                    <ListFilter className="text-gray-600" size={24} />
+                </button>
+                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                    <span className="sr-only">Group Data</span>
+                    <Layers className="text-gray-600" size={24} />
+                </button>
+            </div>
 
             <table>
                 <thead>
