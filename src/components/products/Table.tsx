@@ -28,6 +28,7 @@ import Sorting from "./SIdePanels/Sorting";
 import { formatDate } from "../../utils/date";
 
 import mockdata from "../../data/data.json";
+import Toggle from "./SIdePanels/Toggle";
 
 export type ProductType = {
     id: number;
@@ -82,9 +83,11 @@ export default function ProductsTable() {
 
     const [sidePanelStatus, setSidePanelStatus] = useState<
         "close" | "sort" | "toggle" | "group" | "filter"
-    >("sort");
+    >("toggle");
 
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
+
+    const [columnVisibility, setColumnVisibility] = useState({});
 
     const tableManager = useReactTable({
         data,
@@ -92,6 +95,7 @@ export default function ProductsTable() {
 
         state: {
             sorting,
+            columnVisibility,
         },
 
         initialState: {
@@ -111,12 +115,22 @@ export default function ProductsTable() {
         onSortingChange: setSorting,
         enableMultiSort: true,
         isMultiSortEvent: () => true,
+
+        // Visibility/Toggle
+        onColumnVisibilityChange: setColumnVisibility,
     });
+
+    function closeSidePanel() {
+        setSidePanelStatus("close");
+    }
 
     return (
         <div className="flex flex-col gap-4 min-h-full max-w-screen-xl mx-auto py-16 px-8">
             <div className="flex items-center justify-end gap-6">
-                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                <button
+                    onClick={() => setSidePanelStatus("toggle")}
+                    className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
+                >
                     <span className="sr-only">Toggle Columns</span>
                     <Eye className="text-gray-600" size={24} />
                 </button>
@@ -217,9 +231,22 @@ export default function ProductsTable() {
                 <SidePanel
                     title={"Sorting Options"}
                     isOpen
-                    onClose={() => setSidePanelStatus("close")}
+                    onClose={closeSidePanel}
                 >
                     <Sorting tableManager={tableManager} />
+                </SidePanel>
+            )}
+
+            {sidePanelStatus === "toggle" && (
+                <SidePanel
+                    title={"Show/Hide Columns"}
+                    isOpen
+                    onClose={closeSidePanel}
+                >
+                    <Toggle
+                        tableManager={tableManager}
+                        setColumnVisibility={setColumnVisibility}
+                    />
                 </SidePanel>
             )}
         </div>
