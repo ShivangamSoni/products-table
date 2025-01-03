@@ -2,11 +2,13 @@ import { Table } from "@tanstack/react-table";
 import { ProductType } from "../Table";
 import { MultiSelect } from "../../MultiSelect";
 import { ChangeEvent, useState } from "react";
+import { PriceRange } from "../../PriceRange";
 
 export type FiltersType = {
     name: string;
     category: string[];
     subcategory: string[];
+    price: number[];
 };
 
 export default function Filter({
@@ -26,17 +28,16 @@ export default function Filter({
     );
 
     const categories: string[] = Array.from(
-        (
-            tableManager.getColumn("category")?.getFacetedUniqueValues() ?? []
-        ).keys()
+        tableManager.getColumn("category")!.getFacetedUniqueValues().keys()
     ).sort();
 
     const subcategories: string[] = Array.from(
-        (
-            tableManager.getColumn("subcategory")?.getFacetedUniqueValues() ??
-            []
-        ).keys()
+        tableManager.getColumn("subcategory")!.getFacetedUniqueValues().keys()
     ).sort();
+
+    const priceRange = tableManager
+        .getColumn("price")!
+        .getFacetedMinMaxValues();
 
     function handleNameChange(e: ChangeEvent<HTMLInputElement>) {
         onChange({ ...filters, name: e.target.value });
@@ -56,6 +57,10 @@ export default function Filter({
             ...filters,
             subcategory: selected.length === 0 ? [""] : selected,
         });
+    }
+
+    function handlePriceChange({ min, max }: { min: number; max: number }) {
+        onChange({ ...filters, price: [min, max] });
     }
 
     return (
@@ -79,6 +84,12 @@ export default function Filter({
                 selectedOptions={subcategory}
                 onChange={handleSubCategoryChange}
                 placeholder="Select Sub-Categories"
+            />
+
+            <PriceRange
+                min={priceRange![0]}
+                max={priceRange![1]}
+                onChange={handlePriceChange}
             />
         </div>
     );

@@ -7,6 +7,7 @@ import {
     flexRender,
     getCoreRowModel,
     getExpandedRowModel,
+    getFacetedMinMaxValues,
     getFacetedUniqueValues,
     getFilteredRowModel,
     getGroupedRowModel,
@@ -143,6 +144,7 @@ const columns = [
             return info.getValue();
         },
         header: "Price",
+        filterFn: "inNumberRange",
     }),
     columnHelper.accessor("sale_price", {
         cell: (info) => {
@@ -181,6 +183,7 @@ const defaultFilterState: FiltersType = {
     name: "",
     category: [""],
     subcategory: [""],
+    price: [],
 };
 
 export default function ProductsTable() {
@@ -245,6 +248,7 @@ export default function ProductsTable() {
         getFilteredRowModel: getFilteredRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFacetedUniqueValues: getFacetedUniqueValues(),
+        getFacetedMinMaxValues: getFacetedMinMaxValues(),
     });
 
     function closeSidePanel() {
