@@ -208,7 +208,7 @@ export default function ProductsTable() {
 
     const [sidePanelStatus, setSidePanelStatus] = useState<
         "close" | "sort" | "toggle" | "group" | "filter"
-    >("filter");
+    >("close");
 
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
 

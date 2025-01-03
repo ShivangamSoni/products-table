@@ -36,7 +36,7 @@ export default function Toggle({
                 {tableManager.getAllLeafColumns().map((column) => (
                     <li key={column.id}>
                         <label className="flex items-center justify-between cursor-pointer gap-3 p-3 border rounded hover:bg-gray-100 focus-visible:bg-gray-100">
-                            {column.id}
+                            {column.columnDef.header?.toString()}
                             <input
                                 type="checkbox"
                                 checked={visibility[column.id]}

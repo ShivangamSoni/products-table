@@ -20,7 +20,7 @@ export default function Sorting({
                                     className="outline-none w-full flex items-center justify-start gap-3 p-3 border rounded hover:bg-gray-100 focus-visible:bg-gray-100"
                                     onClick={column.getToggleSortingHandler()}
                                 >
-                                    {column.id}
+                                    {column.columnDef.header?.toString()}
                                     {!isSorted ? (
                                         <ArrowUpDown size={16} />
                                     ) : isSorted === "asc" ? (
