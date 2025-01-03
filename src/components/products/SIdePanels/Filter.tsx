@@ -18,9 +18,11 @@ export default function Filter({
     filters: FiltersType;
     onChange: (filter: FiltersType) => void;
 }) {
-    const [category, setCategory] = useState<string[]>(filters.category);
+    const [category, setCategory] = useState<string[]>(
+        filters.category[0] === "" ? [] : filters.category
+    );
     const [subcategory, setSubCategory] = useState<string[]>(
-        filters.subcategory
+        filters.subcategory[0] === "" ? [] : filters.subcategory
     );
 
     const categories: string[] = Array.from(
@@ -44,7 +46,7 @@ export default function Filter({
         setCategory(selected);
         onChange({
             ...filters,
-            category: selected,
+            category: selected.length === 0 ? [""] : selected,
         });
     }
 
@@ -52,7 +54,7 @@ export default function Filter({
         setSubCategory(selected);
         onChange({
             ...filters,
-            subcategory: selected,
+            subcategory: selected.length === 0 ? [""] : selected,
         });
     }
 
