@@ -1,11 +1,14 @@
 import { useState } from "react";
 
 import {
+    ColumnFiltersState,
     ColumnSort,
     createColumnHelper,
     flexRender,
     getCoreRowModel,
     getExpandedRowModel,
+    getFacetedUniqueValues,
+    getFilteredRowModel,
     getGroupedRowModel,
     getPaginationRowModel,
     getSortedRowModel,
@@ -33,6 +36,7 @@ import SidePanel from "../sidepanel/SidePanel";
 import Sorting from "./SIdePanels/Sorting";
 import Toggle from "./SIdePanels/Toggle";
 import Group from "./SIdePanels/Group";
+import Filter, { FiltersType } from "./SIdePanels/Filter";
 
 import { formatDate } from "../../utils/date";
 
@@ -148,12 +152,16 @@ const expanderColumn = columnHelper.display({
     },
 });
 
+const defaultFilterState: FiltersType = {
+    category: [],
+};
+
 export default function ProductsTable() {
     const [data] = useState<ProductType[]>(() => [...mockdata]);
 
     const [sidePanelStatus, setSidePanelStatus] = useState<
         "close" | "sort" | "toggle" | "group" | "filter"
-    >("group");
+    >("filter");
 
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
 
@@ -162,6 +170,10 @@ export default function ProductsTable() {
     const [grouping, setGrouping] = useState<GroupingState>([]);
     const [selectedGroupBy, setSelectedGroupBy] = useState<string[]>([]);
     const [expanded, setExpanded] = useState({});
+
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [sidePanelFilters, setSidePanelFilters] =
+        useState<FiltersType>(defaultFilterState);
 
     const tableManager = useReactTable({
         data,
@@ -172,6 +184,7 @@ export default function ProductsTable() {
             columnVisibility,
             grouping,
             expanded,
+            columnFilters,
         },
 
         initialState: {
@@ -200,6 +213,11 @@ export default function ProductsTable() {
         onGroupingChange: setGrouping,
         getExpandedRowModel: getExpandedRowModel(),
         onExpandedChange: setExpanded,
+
+        // Filtering
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnFiltersChange: setColumnFilters,
+        getFacetedUniqueValues: getFacetedUniqueValues(),
     });
 
     function closeSidePanel() {
@@ -213,6 +231,16 @@ export default function ProductsTable() {
     const handleClearGroup = () => {
         setSelectedGroupBy([]);
         setGrouping([]);
+    };
+
+    const handleFiltersChange = (newFilters: FiltersType) => {
+        setSidePanelFilters(newFilters);
+        setColumnFilters(
+            Object.entries(newFilters).map(([key, value]) => ({
+                id: key,
+                value: value,
+            }))
+        );
     };
 
     return (
@@ -232,7 +260,10 @@ export default function ProductsTable() {
                     <span className="sr-only">Sort Data</span>
                     <ArrowUpDown className="text-gray-600" size={24} />
                 </button>
-                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                <button
+                    onClick={() => setSidePanelStatus("filter")}
+                    className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
+                >
                     <span className="sr-only">Filter</span>
                     <ListFilter className="text-gray-600" size={24} />
                 </button>
@@ -374,6 +405,16 @@ export default function ProductsTable() {
                         onChange={setSelectedGroupBy}
                         onApply={handleApplyGroup}
                         onClear={handleClearGroup}
+                    />
+                </SidePanel>
+            )}
+
+            {sidePanelStatus === "filter" && (
+                <SidePanel title={"Filters"} isOpen onClose={closeSidePanel}>
+                    <Filter
+                        tableManager={tableManager}
+                        filters={sidePanelFilters}
+                        onChange={handleFiltersChange}
                     />
                 </SidePanel>
             )}
