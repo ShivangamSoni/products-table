@@ -3,18 +3,19 @@ import { Table } from "@tanstack/react-table";
 import { DateRange, Range, RangeKeyDict } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import moment from "moment";
 
 import { ProductType } from "../Table";
 import { MultiSelect } from "../../MultiSelect";
 import { PriceRange } from "../../PriceRange";
 import { formatDate, getMinMaxDates } from "../../../utils/date";
-import moment from "moment";
 
 export type FiltersType = {
     name: string;
     category: string[];
     subcategory: string[];
     createdAt: string[];
+    updatedAt: string[];
     price: number[];
     sale_price: number[];
 };
@@ -43,17 +44,44 @@ export default function Filter({
         tableManager.getColumn("subcategory")!.getFacetedUniqueValues().keys()
     ).sort();
 
-    const dateRange = getMinMaxDates(
+    const createdDateRange = getMinMaxDates(
         Array.from(
             tableManager.getColumn("createdAt")!.getFacetedUniqueValues().keys()
         )
     );
     const [isCreatedDatePickerOpen, setIsCreatedDatePickerOpen] =
         useState(false);
-    const [ranges, setRanges] = useState<Range[]>([
+    const [createdRanges, setCreatedRanges] = useState<Range[]>([
         {
-            startDate: new Date(dateRange[0]) as unknown as Date,
-            endDate: new Date(dateRange[1]) as unknown as Date,
+            startDate:
+                filters.createdAt[0] !== ""
+                    ? new Date(filters.createdAt[0])
+                    : new Date(createdDateRange[0]),
+            endDate:
+                filters.createdAt[1] !== ""
+                    ? new Date(filters.createdAt[1])
+                    : new Date(createdDateRange[1]),
+            key: "selection",
+        },
+    ]);
+
+    const updatedDateRange = getMinMaxDates(
+        Array.from(
+            tableManager.getColumn("updatedAt")!.getFacetedUniqueValues().keys()
+        )
+    );
+    const [isUpdatedDatePickerOpen, setIsUpdatedDatePickerOpen] =
+        useState(false);
+    const [updatedRanges, setUpdatedRanges] = useState<Range[]>([
+        {
+            startDate:
+                filters.updatedAt[0] !== ""
+                    ? new Date(filters.updatedAt[0])
+                    : new Date(updatedDateRange[0]),
+            endDate:
+                filters.updatedAt[1] !== ""
+                    ? new Date(filters.updatedAt[1])
+                    : new Date(updatedDateRange[1]),
             key: "selection",
         },
     ]);
@@ -90,12 +118,24 @@ export default function Filter({
         });
     }
 
-    function handleDateChange(item: RangeKeyDict) {
+    function handleCreatedDateChange(item: RangeKeyDict) {
         const newRange = item.selection;
-        setRanges([newRange]);
+        setCreatedRanges([newRange]);
         onChange({
             ...filters,
             createdAt: [
+                moment(newRange.startDate).format("DD-MMM-YYYY"),
+                moment(newRange.endDate).format("DD-MMM-YYYY"),
+            ],
+        });
+    }
+
+    function handleUpdatedDateChange(item: RangeKeyDict) {
+        const newRange = item.selection;
+        setUpdatedRanges([newRange]);
+        onChange({
+            ...filters,
+            updatedAt: [
                 moment(newRange.startDate).format("DD-MMM-YYYY"),
                 moment(newRange.endDate).format("DD-MMM-YYYY"),
             ],
@@ -137,22 +177,49 @@ export default function Filter({
                 <button
                     onClick={() => setIsCreatedDatePickerOpen((prev) => !prev)}
                 >
-                    {formatDate(ranges[0].startDate ?? "")} To{" "}
-                    {formatDate(ranges[0].endDate ?? "")}
+                    {formatDate(createdRanges[0].startDate ?? "")} To{" "}
+                    {formatDate(createdRanges[0].endDate ?? "")}
                 </button>
                 {isCreatedDatePickerOpen && (
                     <div className="absolute top-full z-[1000] border border-black">
                         <DateRange
                             editableDateInputs
-                            onChange={handleDateChange}
+                            onChange={handleCreatedDateChange}
                             moveRangeOnFirstSelection={false}
-                            ranges={ranges}
-                            minDate={new Date(dateRange[0])}
-                            maxDate={new Date(dateRange[1])}
+                            ranges={createdRanges}
+                            minDate={new Date(createdDateRange[0])}
+                            maxDate={new Date(createdDateRange[1])}
                             onRangeFocusChange={(range) => {
                                 // Both these values are 0 when the range selection has been made
                                 if (range[0] === 0 && range[1] === 0) {
                                     setIsCreatedDatePickerOpen(false);
+                                }
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
+
+            <div className="grid relative">
+                <button
+                    onClick={() => setIsUpdatedDatePickerOpen((prev) => !prev)}
+                >
+                    {formatDate(updatedRanges[0].startDate ?? "")} To{" "}
+                    {formatDate(updatedRanges[0].endDate ?? "")}
+                </button>
+                {isUpdatedDatePickerOpen && (
+                    <div className="absolute top-full z-[1000] border border-black">
+                        <DateRange
+                            editableDateInputs
+                            onChange={handleUpdatedDateChange}
+                            moveRangeOnFirstSelection={false}
+                            ranges={updatedRanges}
+                            minDate={new Date(updatedDateRange[0])}
+                            maxDate={new Date(updatedDateRange[1])}
+                            onRangeFocusChange={(range) => {
+                                // Both these values are 0 when the range selection has been made
+                                if (range[0] === 0 && range[1] === 0) {
+                                    setIsUpdatedDatePickerOpen(false);
                                 }
                             }}
                         />

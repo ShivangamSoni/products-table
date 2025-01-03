@@ -147,6 +147,7 @@ const columns = [
             return formatDate(info.getValue());
         },
         header: "Updated At",
+        filterFn: dateFilterFn,
     }),
     columnHelper.accessor("price", {
         cell: (info) => {
@@ -197,6 +198,7 @@ const defaultFilterState: FiltersType = {
     category: [""],
     subcategory: [""],
     createdAt: ["", ""],
+    updatedAt: ["", ""],
     price: [],
     sale_price: [],
 };
