@@ -1,9 +1,9 @@
 import { useState } from "react";
-
 import {
     ColumnFiltersState,
     ColumnSort,
     createColumnHelper,
+    FilterFn,
     flexRender,
     getCoreRowModel,
     getExpandedRowModel,
@@ -15,9 +15,8 @@ import {
     GroupingState,
     useReactTable,
 } from "@tanstack/react-table";
-
+import Fuse from "fuse.js";
 import { clsx } from "clsx";
-
 import {
     ArrowDown,
     ArrowUp,
@@ -39,7 +38,6 @@ import Group from "./SIdePanels/Group";
 import Filter, { FiltersType } from "./SIdePanels/Filter";
 
 import { formatDate } from "../../utils/date";
-
 import mockdata from "../../data/data.json";
 
 export type ProductType = {
@@ -51,6 +49,30 @@ export type ProductType = {
     updatedAt: string;
     price: number;
     sale_price?: number | null;
+};
+
+const fuzzyFilter: FilterFn<ProductType> = (
+    row,
+    columnId,
+    filterValue: string
+) => {
+    // Return true if there's no filter value
+    if (!filterValue || typeof filterValue !== "string") {
+        return true;
+    }
+
+    const searchValue = row.getValue(columnId);
+
+    // Return false if the value to search is not a string
+    if (typeof searchValue !== "string") {
+        return false;
+    }
+
+    const fuse = new Fuse([searchValue], {
+        threshold: 0.5,
+    });
+
+    return fuse.search(filterValue).length > 0;
 };
 
 const columnHelper = createColumnHelper<ProductType>();
@@ -73,6 +95,7 @@ const columns = [
             return info.getValue();
         },
         header: "Name",
+        filterFn: fuzzyFilter,
     }),
     columnHelper.accessor("category", {
         cell: (info) => {

@@ -1,9 +1,10 @@
 import { Table } from "@tanstack/react-table";
 import { ProductType } from "../Table";
 import { MultiSelect } from "../../MultiSelect";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 
 export type FiltersType = {
+    name: string;
     category: string[];
     subcategory: string[];
 };
@@ -35,6 +36,10 @@ export default function Filter({
         ).keys()
     ).sort();
 
+    function handleNameChange(e: ChangeEvent<HTMLInputElement>) {
+        onChange({ ...filters, name: e.target.value });
+    }
+
     function handleCategoryChange(selected: string[]) {
         setCategory(selected);
         onChange({
@@ -53,6 +58,13 @@ export default function Filter({
 
     return (
         <div className="space-y-3">
+            <input
+                type="text"
+                value={filters.name}
+                onChange={handleNameChange}
+                placeholder="Search Name"
+            />
+
             <MultiSelect
                 options={categories}
                 selectedOptions={category}
