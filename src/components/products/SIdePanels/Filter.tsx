@@ -9,6 +9,7 @@ export type FiltersType = {
     category: string[];
     subcategory: string[];
     price: number[];
+    sale_price: number[];
 };
 
 export default function Filter({
@@ -38,6 +39,14 @@ export default function Filter({
     const priceRange = tableManager
         .getColumn("price")!
         .getFacetedMinMaxValues();
+    const minPrice = filters.price[0] ?? priceRange![0];
+    const maxPrice = filters.price[1] ?? priceRange![1];
+
+    const salePriceRange = tableManager
+        .getColumn("sale_price")!
+        .getFacetedMinMaxValues();
+    const minSalePrice = filters.sale_price[0] ?? salePriceRange![0];
+    const maxSalePrice = filters.sale_price[1] ?? salePriceRange![1];
 
     function handleNameChange(e: ChangeEvent<HTMLInputElement>) {
         onChange({ ...filters, name: e.target.value });
@@ -61,6 +70,10 @@ export default function Filter({
 
     function handlePriceChange({ min, max }: { min: number; max: number }) {
         onChange({ ...filters, price: [min, max] });
+    }
+
+    function handleSalePriceChange({ min, max }: { min: number; max: number }) {
+        onChange({ ...filters, sale_price: [min, max] });
     }
 
     return (
@@ -89,7 +102,17 @@ export default function Filter({
             <PriceRange
                 min={priceRange![0]}
                 max={priceRange![1]}
+                defaultMin={minPrice}
+                defaultMax={maxPrice}
                 onChange={handlePriceChange}
+            />
+
+            <PriceRange
+                min={salePriceRange![0]}
+                max={salePriceRange![1]}
+                defaultMin={minSalePrice}
+                defaultMax={maxSalePrice}
+                onChange={handleSalePriceChange}
             />
         </div>
     );

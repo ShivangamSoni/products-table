@@ -3,6 +3,8 @@ import React, { useState } from "react";
 interface PriceRangeProps {
     min: number;
     max: number;
+    defaultMin: number;
+    defaultMax: number;
     step?: number;
     onChange: (values: { min: number; max: number }) => void;
     formatValue?: (value: number) => string;
@@ -11,12 +13,14 @@ interface PriceRangeProps {
 export function PriceRange({
     min,
     max,
+    defaultMin,
+    defaultMax,
     step = 1,
     onChange,
     formatValue = (value) => `$${value.toLocaleString()}`,
 }: PriceRangeProps) {
-    const [minValue, setMinValue] = useState(min);
-    const [maxValue, setMaxValue] = useState(max);
+    const [minValue, setMinValue] = useState(defaultMin);
+    const [maxValue, setMaxValue] = useState(defaultMax);
     const [isDragging, setIsDragging] = useState<"min" | "max" | null>(null);
 
     const calculateLeftPosition = (value: number) => {

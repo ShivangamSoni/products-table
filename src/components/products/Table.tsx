@@ -154,6 +154,7 @@ const columns = [
             return info.getValue();
         },
         header: "Sale Price",
+        filterFn: "inNumberRange",
     }),
 ];
 
@@ -184,6 +185,7 @@ const defaultFilterState: FiltersType = {
     category: [""],
     subcategory: [""],
     price: [],
+    sale_price: [],
 };
 
 export default function ProductsTable() {
