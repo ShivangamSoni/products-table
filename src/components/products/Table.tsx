@@ -154,6 +154,7 @@ const expanderColumn = columnHelper.display({
 
 const defaultFilterState: FiltersType = {
     category: [],
+    subcategory: [],
 };
 
 export default function ProductsTable() {

@@ -5,6 +5,7 @@ import { useState } from "react";
 
 export type FiltersType = {
     category: string[];
+    subcategory: string[];
 };
 
 export default function Filter({
@@ -16,11 +17,21 @@ export default function Filter({
     filters: FiltersType;
     onChange: (filter: FiltersType) => void;
 }) {
-    const [category, setCategory] = useState<string[]>([]);
+    const [category, setCategory] = useState<string[]>(filters.category);
+    const [subcategory, setSubCategory] = useState<string[]>(
+        filters.subcategory
+    );
 
     const categories: string[] = Array.from(
         (
             tableManager.getColumn("category")?.getFacetedUniqueValues() ?? []
+        ).keys()
+    ).sort();
+
+    const subcategories: string[] = Array.from(
+        (
+            tableManager.getColumn("subcategory")?.getFacetedUniqueValues() ??
+            []
         ).keys()
     ).sort();
 
@@ -32,13 +43,28 @@ export default function Filter({
         });
     }
 
+    function handleSubCategoryChange(selected: string[]) {
+        setSubCategory(selected);
+        onChange({
+            ...filters,
+            subcategory: selected,
+        });
+    }
+
     return (
-        <div>
+        <div className="space-y-3">
             <MultiSelect
                 options={categories}
                 selectedOptions={category}
                 onChange={handleCategoryChange}
                 placeholder="Select Categories"
+            />
+
+            <MultiSelect
+                options={subcategories}
+                selectedOptions={subcategory}
+                onChange={handleSubCategoryChange}
+                placeholder="Select Sub-Categories"
             />
         </div>
     );
