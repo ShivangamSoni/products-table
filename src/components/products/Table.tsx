@@ -105,6 +105,7 @@ const columns = [
             return info.getValue();
         },
         header: "Category",
+        filterFn: "arrIncludesSome",
     }),
     columnHelper.accessor("subcategory", {
         cell: (info) => {
@@ -114,6 +115,7 @@ const columns = [
             return info.getValue();
         },
         header: "Subcategory",
+        filterFn: "arrIncludesSome",
     }),
     columnHelper.accessor("createdAt", {
         cell: (info) => {
@@ -176,6 +178,7 @@ const expanderColumn = columnHelper.display({
 });
 
 const defaultFilterState: FiltersType = {
+    name: "",
     category: [],
     subcategory: [],
 };
