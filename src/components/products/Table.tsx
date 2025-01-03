@@ -1,20 +1,24 @@
 import { useState } from "react";
-
 import {
+    ColumnFiltersState,
     ColumnSort,
     createColumnHelper,
+    FilterFn,
     flexRender,
     getCoreRowModel,
     getExpandedRowModel,
+    getFacetedMinMaxValues,
+    getFacetedUniqueValues,
+    getFilteredRowModel,
     getGroupedRowModel,
     getPaginationRowModel,
     getSortedRowModel,
     GroupingState,
     useReactTable,
 } from "@tanstack/react-table";
-
+import Fuse from "fuse.js";
+import moment from "moment";
 import { clsx } from "clsx";
-
 import {
     ArrowDown,
     ArrowUp,
@@ -33,9 +37,9 @@ import SidePanel from "../sidepanel/SidePanel";
 import Sorting from "./SIdePanels/Sorting";
 import Toggle from "./SIdePanels/Toggle";
 import Group from "./SIdePanels/Group";
+import Filter, { FiltersType } from "./SIdePanels/Filter";
 
 import { formatDate } from "../../utils/date";
-
 import mockdata from "../../data/data.json";
 
 export type ProductType = {
@@ -47,6 +51,40 @@ export type ProductType = {
     updatedAt: string;
     price: number;
     sale_price?: number | null;
+};
+
+const fuzzyFilter: FilterFn<ProductType> = (
+    row,
+    columnId,
+    filterValue: string
+) => {
+    // Return true if there's no filter value
+    if (!filterValue || typeof filterValue !== "string") {
+        return true;
+    }
+
+    const searchValue = row.getValue(columnId);
+
+    // Return false if the value to search is not a string
+    if (typeof searchValue !== "string") {
+        return false;
+    }
+
+    const fuse = new Fuse([searchValue], {
+        threshold: 0.5,
+    });
+
+    return fuse.search(filterValue).length > 0;
+};
+
+const dateFilterFn: FilterFn<ProductType> = (row, columnId, filterValue) => {
+    const [start, end] = filterValue || [null, null];
+    const rowDate = moment(row.getValue(columnId));
+
+    if (start && rowDate.isBefore(moment(start), "day")) return false;
+    if (end && rowDate.isAfter(moment(end), "day")) return false;
+
+    return true;
 };
 
 const columnHelper = createColumnHelper<ProductType>();
@@ -69,6 +107,7 @@ const columns = [
             return info.getValue();
         },
         header: "Name",
+        filterFn: fuzzyFilter,
     }),
     columnHelper.accessor("category", {
         cell: (info) => {
@@ -78,6 +117,7 @@ const columns = [
             return info.getValue();
         },
         header: "Category",
+        filterFn: "arrIncludesSome",
     }),
     columnHelper.accessor("subcategory", {
         cell: (info) => {
@@ -87,6 +127,7 @@ const columns = [
             return info.getValue();
         },
         header: "Subcategory",
+        filterFn: "arrIncludesSome",
     }),
     columnHelper.accessor("createdAt", {
         cell: (info) => {
@@ -96,6 +137,7 @@ const columns = [
             return formatDate(info.getValue());
         },
         header: "Created At",
+        filterFn: dateFilterFn,
     }),
     columnHelper.accessor("updatedAt", {
         cell: (info) => {
@@ -105,6 +147,7 @@ const columns = [
             return formatDate(info.getValue());
         },
         header: "Updated At",
+        filterFn: dateFilterFn,
     }),
     columnHelper.accessor("price", {
         cell: (info) => {
@@ -114,6 +157,7 @@ const columns = [
             return info.getValue();
         },
         header: "Price",
+        filterFn: "inNumberRange",
     }),
     columnHelper.accessor("sale_price", {
         cell: (info) => {
@@ -123,6 +167,7 @@ const columns = [
             return info.getValue();
         },
         header: "Sale Price",
+        filterFn: "inNumberRange",
     }),
 ];
 
@@ -148,12 +193,22 @@ const expanderColumn = columnHelper.display({
     },
 });
 
+const defaultFilterState: FiltersType = {
+    name: "",
+    category: [""],
+    subcategory: [""],
+    createdAt: ["", ""],
+    updatedAt: ["", ""],
+    price: [],
+    sale_price: [],
+};
+
 export default function ProductsTable() {
     const [data] = useState<ProductType[]>(() => [...mockdata]);
 
     const [sidePanelStatus, setSidePanelStatus] = useState<
         "close" | "sort" | "toggle" | "group" | "filter"
-    >("group");
+    >("filter");
 
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
 
@@ -162,6 +217,10 @@ export default function ProductsTable() {
     const [grouping, setGrouping] = useState<GroupingState>([]);
     const [selectedGroupBy, setSelectedGroupBy] = useState<string[]>([]);
     const [expanded, setExpanded] = useState({});
+
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [sidePanelFilters, setSidePanelFilters] =
+        useState<FiltersType>(defaultFilterState);
 
     const tableManager = useReactTable({
         data,
@@ -172,6 +231,7 @@ export default function ProductsTable() {
             columnVisibility,
             grouping,
             expanded,
+            columnFilters,
         },
 
         initialState: {
@@ -200,6 +260,12 @@ export default function ProductsTable() {
         onGroupingChange: setGrouping,
         getExpandedRowModel: getExpandedRowModel(),
         onExpandedChange: setExpanded,
+
+        // Filtering
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnFiltersChange: setColumnFilters,
+        getFacetedUniqueValues: getFacetedUniqueValues(),
+        getFacetedMinMaxValues: getFacetedMinMaxValues(),
     });
 
     function closeSidePanel() {
@@ -213,6 +279,16 @@ export default function ProductsTable() {
     const handleClearGroup = () => {
         setSelectedGroupBy([]);
         setGrouping([]);
+    };
+
+    const handleFiltersChange = (newFilters: FiltersType) => {
+        setSidePanelFilters(newFilters);
+        setColumnFilters(
+            Object.entries(newFilters).map(([key, value]) => ({
+                id: key,
+                value: value,
+            }))
+        );
     };
 
     return (
@@ -232,7 +308,10 @@ export default function ProductsTable() {
                     <span className="sr-only">Sort Data</span>
                     <ArrowUpDown className="text-gray-600" size={24} />
                 </button>
-                <button className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200">
+                <button
+                    onClick={() => setSidePanelStatus("filter")}
+                    className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
+                >
                     <span className="sr-only">Filter</span>
                     <ListFilter className="text-gray-600" size={24} />
                 </button>
@@ -374,6 +453,16 @@ export default function ProductsTable() {
                         onChange={setSelectedGroupBy}
                         onApply={handleApplyGroup}
                         onClear={handleClearGroup}
+                    />
+                </SidePanel>
+            )}
+
+            {sidePanelStatus === "filter" && (
+                <SidePanel title={"Filters"} isOpen onClose={closeSidePanel}>
+                    <Filter
+                        tableManager={tableManager}
+                        filters={sidePanelFilters}
+                        onChange={handleFiltersChange}
                     />
                 </SidePanel>
             )}
