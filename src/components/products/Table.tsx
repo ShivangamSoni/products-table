@@ -17,6 +17,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import Fuse from "fuse.js";
+import moment from "moment";
 import { clsx } from "clsx";
 import {
     ArrowDown,
@@ -76,6 +77,16 @@ const fuzzyFilter: FilterFn<ProductType> = (
     return fuse.search(filterValue).length > 0;
 };
 
+const dateFilterFn: FilterFn<ProductType> = (row, columnId, filterValue) => {
+    const [start, end] = filterValue || [null, null];
+    const rowDate = moment(row.getValue(columnId));
+
+    if (start && rowDate.isBefore(moment(start), "day")) return false;
+    if (end && rowDate.isAfter(moment(end), "day")) return false;
+
+    return true;
+};
+
 const columnHelper = createColumnHelper<ProductType>();
 
 const columns = [
@@ -126,6 +137,7 @@ const columns = [
             return formatDate(info.getValue());
         },
         header: "Created At",
+        filterFn: dateFilterFn,
     }),
     columnHelper.accessor("updatedAt", {
         cell: (info) => {
@@ -184,6 +196,7 @@ const defaultFilterState: FiltersType = {
     name: "",
     category: [""],
     subcategory: [""],
+    createdAt: ["", ""],
     price: [],
     sale_price: [],
 };
