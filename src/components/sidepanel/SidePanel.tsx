@@ -30,7 +30,7 @@ export default function SidePanel({
             {/* Panel */}
             <div
                 className={clsx(
-                    "fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
+                    "fixed right-0 top-0 h-full w-full max-w-lg overflow-scroll bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
                     {
                         "translate-x-0": isOpen,
                         "translate-x-full": !isOpen,

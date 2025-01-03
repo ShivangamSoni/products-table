@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, ReactNode, useState } from "react";
 import { Table } from "@tanstack/react-table";
 import { DateRange, Range, RangeKeyDict } from "react-date-range";
 import "react-date-range/dist/styles.css";
@@ -9,6 +9,7 @@ import { ProductType } from "../Table";
 import { MultiSelect } from "../../MultiSelect";
 import { PriceRange } from "../../PriceRange";
 import { formatDate, getMinMaxDates } from "../../../utils/date";
+import { RotateCcw } from "lucide-react";
 
 export type FiltersType = {
     name: string;
@@ -102,6 +103,8 @@ export default function Filter({
         onChange({ ...filters, name: e.target.value });
     }
 
+    const resetName = () => onChange({ ...filters, name: "" });
+
     function handleCategoryChange(selected: string[]) {
         setCategory(selected);
         onChange({
@@ -110,6 +113,8 @@ export default function Filter({
         });
     }
 
+    const resetCategory = () => handleCategoryChange([]);
+
     function handleSubCategoryChange(selected: string[]) {
         setSubCategory(selected);
         onChange({
@@ -117,6 +122,8 @@ export default function Filter({
             subcategory: selected.length === 0 ? [""] : selected,
         });
     }
+
+    const resetSubCategory = () => handleSubCategoryChange([]);
 
     function handleCreatedDateChange(item: RangeKeyDict) {
         const newRange = item.selection;
@@ -130,6 +137,15 @@ export default function Filter({
         });
     }
 
+    const resetCreatedAt = () =>
+        handleCreatedDateChange({
+            selection: {
+                startDate: new Date(createdDateRange[0]),
+                endDate: new Date(createdDateRange[1]),
+                key: "selection",
+            },
+        });
+
     function handleUpdatedDateChange(item: RangeKeyDict) {
         const newRange = item.selection;
         setUpdatedRanges([newRange]);
@@ -142,106 +158,225 @@ export default function Filter({
         });
     }
 
+    const resetUpdatedAt = () =>
+        handleUpdatedDateChange({
+            selection: {
+                startDate: new Date(updatedDateRange[0]),
+                endDate: new Date(updatedDateRange[1]),
+                key: "selection",
+            },
+        });
+
     function handlePriceChange({ min, max }: { min: number; max: number }) {
         onChange({ ...filters, price: [min, max] });
     }
+
+    const resetPrice = () =>
+        handlePriceChange({
+            min: priceRange![0],
+            max: priceRange![1],
+        });
 
     function handleSalePriceChange({ min, max }: { min: number; max: number }) {
         onChange({ ...filters, sale_price: [min, max] });
     }
 
+    const resetSalePrice = () =>
+        handleSalePriceChange({
+            min: salePriceRange![0],
+            max: salePriceRange![1],
+        });
+
+    function resetFilters() {
+        resetCategory();
+        resetSubCategory();
+        resetCreatedAt();
+        resetUpdatedAt();
+        resetPrice();
+        resetSalePrice();
+        resetName();
+    }
+
     return (
         <div className="space-y-3">
-            <input
-                type="text"
-                value={filters.name}
-                onChange={handleNameChange}
-                placeholder="Search Name"
-            />
+            <FilterItem
+                title="Name"
+                btnLabel="Clear Name Filter"
+                onClear={resetName}
+            >
+                <input
+                    className="min-h-[42px] w-full p-1.5 border border-gray-300 rounded-lg bg-white cursor-text flex flex-wrap gap-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+                    type="text"
+                    value={filters.name}
+                    onChange={handleNameChange}
+                    placeholder="Search Name"
+                />
+            </FilterItem>
 
-            <MultiSelect
-                options={categories}
-                selectedOptions={category}
-                onChange={handleCategoryChange}
-                placeholder="Select Categories"
-            />
+            <FilterItem
+                title="Category"
+                btnLabel="Clear Category Filter"
+                onClear={resetCategory}
+            >
+                <MultiSelect
+                    options={categories}
+                    selectedOptions={category}
+                    onChange={handleCategoryChange}
+                    placeholder="Select Categories"
+                />
+            </FilterItem>
 
-            <MultiSelect
-                options={subcategories}
-                selectedOptions={subcategory}
-                onChange={handleSubCategoryChange}
-                placeholder="Select Sub-Categories"
-            />
+            <FilterItem
+                title="Sub Category"
+                btnLabel="Clear Sub-Category Filter"
+                onClear={resetSubCategory}
+            >
+                <MultiSelect
+                    options={subcategories}
+                    selectedOptions={subcategory}
+                    onChange={handleSubCategoryChange}
+                    placeholder="Select Sub-Categories"
+                />
+            </FilterItem>
 
-            <div className="grid relative">
+            <FilterItem
+                title="Created At"
+                btnLabel="Reset Created At Filter"
+                onClear={resetCreatedAt}
+            >
+                <div className="grid relative">
+                    <button
+                        className="min-h-[42px] p-1.5 border border-gray-300 rounded-lg bg-white flex flex-wrap gap-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+                        onClick={() =>
+                            setIsCreatedDatePickerOpen((prev) => !prev)
+                        }
+                    >
+                        {formatDate(createdRanges[0].startDate ?? "")} To{" "}
+                        {formatDate(createdRanges[0].endDate ?? "")}
+                    </button>
+                    {isCreatedDatePickerOpen && (
+                        <div className="absolute top-full z-[1000] border border-black">
+                            <DateRange
+                                editableDateInputs
+                                onChange={handleCreatedDateChange}
+                                moveRangeOnFirstSelection={false}
+                                ranges={createdRanges}
+                                minDate={new Date(createdDateRange[0])}
+                                maxDate={new Date(createdDateRange[1])}
+                                onRangeFocusChange={(range) => {
+                                    // Both these values are 0 when the range selection has been made
+                                    if (range[0] === 0 && range[1] === 0) {
+                                        setIsCreatedDatePickerOpen(false);
+                                    }
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
+            </FilterItem>
+
+            <FilterItem
+                title="Updated At"
+                btnLabel="Reset Updated At Filter"
+                onClear={resetUpdatedAt}
+            >
+                <div className="grid relative">
+                    <button
+                        className="min-h-[42px] p-1.5 border border-gray-300 rounded-lg bg-white cursor-text flex flex-wrap gap-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+                        onClick={() =>
+                            setIsUpdatedDatePickerOpen((prev) => !prev)
+                        }
+                    >
+                        {formatDate(updatedRanges[0].startDate ?? "")} To{" "}
+                        {formatDate(updatedRanges[0].endDate ?? "")}
+                    </button>
+                    {isUpdatedDatePickerOpen && (
+                        <div className="absolute top-full z-[1000] border border-black">
+                            <DateRange
+                                editableDateInputs
+                                onChange={handleUpdatedDateChange}
+                                moveRangeOnFirstSelection={false}
+                                ranges={updatedRanges}
+                                minDate={new Date(updatedDateRange[0])}
+                                maxDate={new Date(updatedDateRange[1])}
+                                onRangeFocusChange={(range) => {
+                                    // Both these values are 0 when the range selection has been made
+                                    if (range[0] === 0 && range[1] === 0) {
+                                        setIsUpdatedDatePickerOpen(false);
+                                    }
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
+            </FilterItem>
+
+            <FilterItem
+                title="Price"
+                btnLabel="Reset Price"
+                onClear={resetPrice}
+            >
+                <div className="pl-5 pt-2">
+                    <PriceRange
+                        min={priceRange![0]}
+                        max={priceRange![1]}
+                        defaultMin={minPrice}
+                        defaultMax={maxPrice}
+                        onChange={handlePriceChange}
+                    />
+                </div>
+            </FilterItem>
+
+            <FilterItem
+                title="Sale Price"
+                btnLabel="Reset Sale Price"
+                onClear={resetSalePrice}
+            >
+                <div className="pl-5 pt-2">
+                    <PriceRange
+                        min={salePriceRange![0]}
+                        max={salePriceRange![1]}
+                        defaultMin={minSalePrice}
+                        defaultMax={maxSalePrice}
+                        onChange={handleSalePriceChange}
+                    />
+                </div>
+            </FilterItem>
+
+            <button
+                className="outline-none w-full text-center p-3 border-2 border-blue-300 rounded hover:bg-gray-100 focus-visible:bg-gray-100"
+                onClick={resetFilters}
+            >
+                Clear Filters
+            </button>
+        </div>
+    );
+}
+
+function FilterItem({
+    title,
+    btnLabel,
+    children,
+    onClear,
+}: {
+    title: string;
+    btnLabel: string;
+    children: ReactNode;
+    onClear: () => void;
+}) {
+    return (
+        <div className="bg-blue-50 border p-2 rounded-lg space-y-2">
+            <div className="flex items-center justify-between">
+                <span className="font-semibold">{title}</span>
                 <button
-                    onClick={() => setIsCreatedDatePickerOpen((prev) => !prev)}
+                    onClick={onClear}
+                    className="outline-none  p-0.5 rounded border border-transparent hover:border-current hover:bg-gray-200 focus-visible:border-current focus-visible:bg-gray-200"
                 >
-                    {formatDate(createdRanges[0].startDate ?? "")} To{" "}
-                    {formatDate(createdRanges[0].endDate ?? "")}
+                    <span className="sr-only">{btnLabel}</span>
+                    <RotateCcw size={20} />
                 </button>
-                {isCreatedDatePickerOpen && (
-                    <div className="absolute top-full z-[1000] border border-black">
-                        <DateRange
-                            editableDateInputs
-                            onChange={handleCreatedDateChange}
-                            moveRangeOnFirstSelection={false}
-                            ranges={createdRanges}
-                            minDate={new Date(createdDateRange[0])}
-                            maxDate={new Date(createdDateRange[1])}
-                            onRangeFocusChange={(range) => {
-                                // Both these values are 0 when the range selection has been made
-                                if (range[0] === 0 && range[1] === 0) {
-                                    setIsCreatedDatePickerOpen(false);
-                                }
-                            }}
-                        />
-                    </div>
-                )}
             </div>
-
-            <div className="grid relative">
-                <button
-                    onClick={() => setIsUpdatedDatePickerOpen((prev) => !prev)}
-                >
-                    {formatDate(updatedRanges[0].startDate ?? "")} To{" "}
-                    {formatDate(updatedRanges[0].endDate ?? "")}
-                </button>
-                {isUpdatedDatePickerOpen && (
-                    <div className="absolute top-full z-[1000] border border-black">
-                        <DateRange
-                            editableDateInputs
-                            onChange={handleUpdatedDateChange}
-                            moveRangeOnFirstSelection={false}
-                            ranges={updatedRanges}
-                            minDate={new Date(updatedDateRange[0])}
-                            maxDate={new Date(updatedDateRange[1])}
-                            onRangeFocusChange={(range) => {
-                                // Both these values are 0 when the range selection has been made
-                                if (range[0] === 0 && range[1] === 0) {
-                                    setIsUpdatedDatePickerOpen(false);
-                                }
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
-
-            <PriceRange
-                min={priceRange![0]}
-                max={priceRange![1]}
-                defaultMin={minPrice}
-                defaultMax={maxPrice}
-                onChange={handlePriceChange}
-            />
-
-            <PriceRange
-                min={salePriceRange![0]}
-                max={salePriceRange![1]}
-                defaultMin={minSalePrice}
-                defaultMax={maxSalePrice}
-                onChange={handleSalePriceChange}
-            />
+            <div className="pr-6">{children}</div>
         </div>
     );
 }
